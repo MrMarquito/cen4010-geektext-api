@@ -1,2 +1,24 @@
-.venv
-__pycache__
+# Python / Virtual Environments
+.venv/
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# SQLite Database (recreated via seed_data.py)
+*.db
+
+# Flutter / Dart
+.dart_tool/
+.packages
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+
+# IDE / OS Artifacts
+.vscode/
+.idea/
+*.DS_Store
+Thumbs.db
+
+commits.txt

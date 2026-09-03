@@ -1,0 +1,22 @@
+feat(backend): initialize FastAPI app and SQLAlchemy SQLite database configuration
+feat(backend): implement Feature 2 user profile models, endpoints, and credit card association
+feat(backend): implement Feature 4 author and book catalog creation and retrieval routes
+feat(backend): implement Feature 5 rating submission, 1-5 validation, and comment tracking
+feat(backend): implement Feature 1 genre filtering, top sellers ranking, and publisher discount
+feat(backend): implement Feature 3 shopping cart addition, subtotal calculation, and deletion
+feat(backend): implement Feature 6 wishlist creation with 3-list limit and transfer-to-cart logic
+test(api): create isolated in-memory SQLite integration test suite verifying features 1-6
+fix(api): modernize UTC datetimes to timezone-aware timestamps to resolve Python 3.14 deprecations
+data(seed): add seed_data.py with real-world tech, sci-fi, fantasy titles, authors, and users
+feat(frontend): scaffold Flutter Web architecture, models, and initial ApiService HTTP methods
+feat(frontend): build responsive book catalog screen with genre filters and top seller views
+feat(frontend): implement shopping cart screen with live subtotal calculation and item deletion
+feat(frontend): implement book details screen with average rating display and review submission
+feat(frontend): implement wishlist screen supporting multiple lists and direct-to-cart transfer
+feat(frontend): implement profile management screen with read-only email enforcement
+feat(frontend): add publisher discount dialog and runtime API configuration switcher
+ci(github): add deploy_pages.yml workflow for automated Flutter Web compilation and Pages deployment
+feat(network): implement dynamic backend auto-discovery and multi-machine Cloudflare tunnel fallback
+style(ui): redesign catalog with procedural book covers, interactive hover cards, and Material 3 theme
+fix(ui): resolve slate palette references, border styling typos, and nested card row layouts
+docs: add comprehensive README.md and project commit history reference
