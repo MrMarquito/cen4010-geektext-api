@@ -1,6 +1,6 @@
-# CEN 4010 - GeekText RESTful API Project Fall 2026[cite: 3]
+# CEN 4010 - GeekText RESTful API Project Fall 2026
 
-An end-to-end, full-stack bookstore application tailored for technology, software architecture, and speculative fiction literature[cite: 3]. The system pairs a high-performance FastAPI backend using SQLAlchemy ORM and SQLite with a responsive, modern Flutter Web client deployed via automated CI/CD to GitHub Pages.
+An end-to-end, full-stack bookstore application tailored for technology, software architecture, and speculative fiction literature. The system pairs a high-performance FastAPI backend using SQLAlchemy ORM and SQLite with a responsive, modern Flutter Web client deployed via automated CI/CD to GitHub Pages.
 
 ---
 
@@ -54,7 +54,7 @@ An end-to-end, full-stack bookstore application tailored for technology, softwar
 geektext/
 ├── .github/
 │   └── workflows/
-│       ├── deploy_pages.yml      # CI/CD Flutter Web builder & GitHub Pages deployer[cite: 2]
+│       ├── deploy_pages.yml      # CI/CD Flutter Web builder & GitHub Pages deployer
 │       └── test.yml              # Automated Pytest suite runner on git push
 ├── api/
 │   └── api.py                   # FastAPI application routes & Pydantic schemas
