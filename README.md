@@ -23,3 +23,15 @@ Implements backend for user registration, user profile retrieval, partial profil
 2. Start the local development server:
    ```bash
    uvicorn api.api:app --reload
+    ```
+
+## UML Diagrams
+
+### Use Case Diagram
+![Use Case Diagram](diagrams/use_case_profile_management.png)
+
+### Class Diagram
+![Class Diagram](diagrams/classes_profile-management.png)
+
+### Sequence Diagram
+![Sequence Diagram](diagrams/sequence_credit_card.png)
