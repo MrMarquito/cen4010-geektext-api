@@ -1,0 +1,42 @@
+@startuml
+autonumber
+actor "Client / Browser" as Client
+participant "FastAPI Router\n(api.py)" as API
+participant "SQLAlchemy Session\n(SessionLocal)" as DB_Session
+database "SQLite Database\n(users.db)" as DB
+
+Client -> API: POST /users/{username}/credit-card/ \n{number, exp, cvv}
+activate API
+
+API -> DB_Session: query(User).filter(User.username == username).first()
+activate DB_Session
+
+DB_Session -> DB: SELECT * FROM users WHERE username = ?
+activate DB
+DB --> DB_Session: User Record
+deactivate DB
+
+DB_Session --> API: db_user object
+deactivate DB_Session
+
+alt User Not Found
+    API --> Client: 404 Not Found {"detail": "User not found!"}
+else User Exists
+    API -> API: new_credit_card = CreditCard(...)
+    API -> DB_Session: db.add(new_credit_card)
+    API -> DB_Session: db.commit()
+    activate DB_Session
+
+    DB_Session -> DB: INSERT INTO credit-cards (...)
+    activate DB
+    DB --> DB_Session: OK
+    deactivate DB
+
+    DB_Session --> API: Transaction committed
+    deactivate DB_Session
+
+    API --> Client: 201 Created (Empty Body)
+end
+
+deactivate API
+@enduml

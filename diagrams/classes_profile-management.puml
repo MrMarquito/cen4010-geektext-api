@@ -1,0 +1,60 @@
+@startuml
+skinparam classAttributeIconSize 0
+hide empty methods
+
+package "Database Models (SQLAlchemy)" {
+    class User {
+        +username : String(100) [PK]
+        +password : String(100)
+        +name : String(100)
+        +email : String(100)
+        +address : String(100)
+    }
+
+    class CreditCard {
+        +id : Integer [PK]
+        +username : String(100) [FK]
+        +number : String(16)
+        +exp : String(7)
+        +cvv : String(4)
+    }
+
+    User "1" *-- "0..*" CreditCard : owns >
+}
+
+package "Validation Schemas (Pydantic)" {
+    class UserCreate {
+        +username : str
+        +password : str
+        +name : str | None
+        +email : str | None
+        +address : str | None
+    }
+
+    class UserUpdate {
+        +password : str | None
+        +name : str | None
+        +address : str | None
+    }
+
+    class UserResponse {
+        +username : str
+        +name : str | None
+        +email : str | None
+        +address : str | None
+    }
+
+    class CreditCardCreate {
+        +number : str
+        +exp : str
+        +cvv : str
+    }
+}
+
+' Conceptual dependencies between API schemas and DB models
+UserCreate ..> User : creates >
+UserUpdate ..> User : updates >
+User ..> UserResponse : serializes to >
+CreditCardCreate ..> CreditCard : creates >
+
+@enduml
