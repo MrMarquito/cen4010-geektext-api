@@ -1,7 +1,9 @@
 # Feature 2: Profile Management API
 
 Owner: Marcos
+
 Branch: `profile-management`
+
 
 ## Overview
 Implements backend for user registration, user profile retrieval, partial profile updates, and credit card association using FastAPI, SQLAlchemy, and SQLite.
