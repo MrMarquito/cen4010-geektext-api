@@ -44,13 +44,13 @@ class CreditCardCreate(BaseModel):
 # API Endpoints/Routes and functions
 @app.get("/")
 def root():
-    return {"text:Welcome to GeekText API"}
+    return {"text": "Welcome to GeekText API"}
 
 
 @app.post("/users/", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
 def create_user(user: UserCreate, db:Session = Depends(get_db)):
-    if db.query(User).filter(user.username == User.username).first():
-        raise HTTPException(status_code=409, detail="User already exists!")
+    if user.email and db.query(User).filter(user.username == User.username).first():
+        raise HTTPException(status_code=409, detail="Email already in use!")
 
     new_user = User(**user.model_dump())
     db.add(new_user)
@@ -67,7 +67,7 @@ def get_user(username: str, db:Session = Depends(get_db)):
 
     return user
 
-@app.put("/users/{username}/update", status_code=status.HTTP_204_NO_CONTENT)
+@app.put("/users/{username}", status_code=status.HTTP_204_NO_CONTENT)
 def update_user(username: str, user: UserUpdate, db:Session = Depends(get_db)):
     db_user = db.query(User).filter(User.username == username).first()
     if not db_user:

@@ -21,7 +21,7 @@ class CreditCard(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     username = Column(String(100), ForeignKey("users.username"), index=True)
     number = Column(String(16), nullable=False)
-    exp = Column(String(4), nullable=False)
-    cvv = Column(String(3), nullable=False)
+    exp = Column(String(7), nullable=False)
+    cvv = Column(String(4), nullable=False)
 
 Base.metadata.create_all(engine)
