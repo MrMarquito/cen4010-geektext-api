@@ -1,0 +1,18 @@
+@startuml
+left to right direction
+skinparam packageStyle rectangle
+
+actor "GeekText User" as User
+
+rectangle "Profile Management System" {
+    usecase "Create Profile\n(POST /users/)" as UC1
+    usecase "Retrieve Profile\n(GET /users/{username})" as UC2
+    usecase "Update Profile Fields\n(PUT /users/{username})" as UC3
+    usecase "Add Credit Card\n(POST /users/{username}/credit-card/)" as UC4
+}
+
+User --> UC1
+User --> UC2
+User --> UC3
+User --> UC4
+@enduml
