@@ -1,0 +1,42 @@
+@startuml
+autonumber
+actor "Client / Browser" as Client
+participant "FastAPI Router\n(api.py)" as API
+participant "SQLAlchemy Session\n(SessionLocal)" as DB_Session
+database "SQLite Database\n(users.db)" as DB
+
+Client -> API: POST /books/ \n{isbn, name, description, price, author_id, genre, publisher, year_published, copies_sold}
+activate API
+
+API -> DB_Session: query(Book).filter(Book.isbn == book.isbn).first()
+activate DB_Session
+
+DB_Session -> DB: SELECT * FROM books WHERE isbn = ?
+activate DB
+DB --> DB_Session: Book Record
+deactivate DB
+
+DB_Session --> API: existing_book object
+deactivate DB_Session
+
+alt ISBN Already Exists
+    API --> Client: 409 Conflict {"detail": "Book with this ISBN already exists!"}
+else ISBN Available
+    API -> API: new_book = Book(...)
+    API -> DB_Session: db.add(new_book)
+    API -> DB_Session: db.commit()
+    activate DB_Session
+
+    DB_Session -> DB: INSERT INTO books (...)
+    activate DB
+    DB --> DB_Session: OK
+    deactivate DB
+
+    DB_Session --> API: Transaction committed
+    deactivate DB_Session
+
+    API --> Client: 201 Created (Book object)
+end
+
+deactivate API
+@enduml

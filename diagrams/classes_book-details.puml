@@ -1,0 +1,78 @@
+@startuml classes_book-details
+skinparam classAttributeIconSize 0
+hide empty methods
+set namespaceSeparator none
+top to bottom direction
+
+package "Validation Schemas (Pydantic)" as Schemas {
+    class "AuthorCreate" as api.AuthorCreate {
+        +first_name : str
+        +last_name : str
+        +biography : str | None
+        +publisher : str | None
+    }
+    class "AuthorResponse" as api.AuthorResponse {
+        +id : int
+        +first_name : str
+        +last_name : str
+        +biography : str | None
+        +publisher : str | None
+    }
+    class "BookCreate" as api.BookCreate {
+        +isbn : str
+        +name : str
+        +description : str | None
+        +price : int
+        +author_id : int
+        +genre : str | None
+        +publisher : str | None
+        +year_published : int | None
+        +copies_sold : int
+    }
+    class "BookResponse" as api.BookResponse {
+        +isbn : str
+        +name : str
+        +description : str | None
+        +price : int
+        +author_id : int
+        +genre : str | None
+        +publisher : str | None
+        +year_published : int | None
+        +copies_sold : int
+    }
+}
+
+package "Database Models (SQLAlchemy)" as Models {
+    class "Author" as db.Author {
+        +id [PK]
+        +first_name
+        +last_name
+        +biography
+        +publisher
+    }
+    class "Book" as db.Book {
+        +isbn [PK]
+        +name
+        +description
+        +price
+        +author_id [FK]
+        +genre
+        +publisher
+        +year_published
+        +copies_sold
+    }
+    db.Author "1" *-- "0..*" db.Book : writes >
+}
+
+' Hidden edges from every schema class down to a model, forcing full-width rank separation
+api.AuthorCreate -[hidden]d-> db.Author
+api.AuthorResponse -[hidden]d-> db.Author
+api.BookCreate -[hidden]d-> db.Author
+api.BookResponse -[hidden]d-> db.Author
+
+api.AuthorCreate ..> db.Author : creates >
+db.Author ..> api.AuthorResponse : serializes to >
+api.BookCreate ..> db.Book : creates >
+db.Book ..> api.BookResponse : serializes to >
+
+@enduml

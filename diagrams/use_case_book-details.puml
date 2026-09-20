@@ -1,0 +1,19 @@
+@startuml
+left to right direction
+skinparam packageStyle rectangle
+
+actor "GeekText User" as User
+actor "Administrator" as Admin
+
+rectangle "Book Details System" {
+    usecase "Create Book\n(POST /books/)" as UC1
+    usecase "Retrieve Book by ISBN\n(GET /books/{isbn})" as UC2
+    usecase "Create Author\n(POST /authors/)" as UC3
+    usecase "List Books by Author\n(GET /authors/{author_id}/books)" as UC4
+}
+
+Admin --> UC1
+Admin --> UC3
+User --> UC2
+User --> UC4
+@enduml
