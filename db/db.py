@@ -24,4 +24,26 @@ class CreditCard(Base):
     exp = Column(String(7), nullable=False)
     cvv = Column(String(4), nullable=False)
 
+class Author(Base):
+    __tablename__ = "authors"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    first_name = Column(String(100), nullable=False)
+    last_name = Column(String(100), nullable=False)
+    biography = Column(String(1000), nullable=True)
+    publisher = Column(String(100), nullable=True)
+
+class Book(Base):
+    __tablename__ = "books"
+
+    isbn = Column(String(13), primary_key=True, index=True)
+    name = Column(String(200), nullable=False)
+    description = Column(String(1000), nullable=True)
+    price = Column(Integer, nullable=False)
+    author_id = Column(Integer, ForeignKey("authors.id"), index=True)
+    genre = Column(String(100), nullable=True)
+    publisher = Column(String(100), nullable=True)
+    year_published = Column(Integer, nullable=True)
+    copies_sold = Column(Integer, default=0)
+
 Base.metadata.create_all(engine)

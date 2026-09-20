@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
-from db.db import SessionLocal, User, CreditCard
+from db.db import SessionLocal, User, CreditCard, Author, Book
 
 # API Init and Conn with DB
 app = FastAPI()
@@ -12,7 +12,6 @@ def get_db():
         yield db
     finally:
         db.close()
-
 
 # Pydantic Models
 class UserCreate(BaseModel):
@@ -34,21 +33,61 @@ class UserResponse(BaseModel):
     address: str | None = None
 
     class Config:
-        from_attributes=True
+        from_attributes = True
 
 class CreditCardCreate(BaseModel):
     number: str
     exp: str
     cvv: str
 
+class AuthorCreate(BaseModel):
+    first_name: str
+    last_name: str
+    biography: str | None = None
+    publisher: str | None = None
+
+class AuthorResponse(BaseModel):
+    id: int
+    first_name: str
+    last_name: str
+    biography: str | None = None
+    publisher: str | None = None
+
+    class Config:
+        from_attributes = True
+
+class BookCreate(BaseModel):
+    isbn: str
+    name: str
+    description: str | None = None
+    price: int
+    author_id: int
+    genre: str | None = None
+    publisher: str | None = None
+    year_published: int | None = None
+    copies_sold: int = 0
+
+class BookResponse(BaseModel):
+    isbn: str
+    name: str
+    description: str | None = None
+    price: int
+    author_id: int
+    genre: str | None = None
+    publisher: str | None = None
+    year_published: int | None = None
+    copies_sold: int
+
+    class Config:
+        from_attributes = True
+
 # API Endpoints/Routes and functions
 @app.get("/")
 def root():
     return {"text": "Welcome to GeekText API"}
 
-
 @app.post("/users/", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
-def create_user(user: UserCreate, db:Session = Depends(get_db)):
+def create_user(user: UserCreate, db: Session = Depends(get_db)):
     if user.email and db.query(User).filter(user.username == User.username).first():
         raise HTTPException(status_code=409, detail="Email already in use!")
 
@@ -59,7 +98,7 @@ def create_user(user: UserCreate, db:Session = Depends(get_db)):
     return new_user
 
 @app.get("/users/{username}", response_model=UserResponse, status_code=status.HTTP_200_OK)
-def get_user(username: str, db:Session = Depends(get_db)):
+def get_user(username: str, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.username == username).first()
 
     if not user:
@@ -68,7 +107,7 @@ def get_user(username: str, db:Session = Depends(get_db)):
     return user
 
 @app.put("/users/{username}", status_code=status.HTTP_204_NO_CONTENT)
-def update_user(username: str, user: UserUpdate, db:Session = Depends(get_db)):
+def update_user(username: str, user: UserUpdate, db: Session = Depends(get_db)):
     db_user = db.query(User).filter(User.username == username).first()
     if not db_user:
         raise HTTPException(status_code=404, detail="User not found!")
@@ -80,7 +119,7 @@ def update_user(username: str, user: UserUpdate, db:Session = Depends(get_db)):
     return
 
 @app.post("/users/{username}/credit-card/", response_model=None, status_code=status.HTTP_201_CREATED)
-def create_credit_card(username: str, credit_card: CreditCardCreate, db:Session=Depends(get_db)):
+def create_credit_card(username: str, credit_card: CreditCardCreate, db: Session = Depends(get_db)):
     db_user = db.query(User).filter(User.username == username).first()
     if not db_user:
         raise HTTPException(status_code=404, detail="User not found!")
@@ -94,3 +133,39 @@ def create_credit_card(username: str, credit_card: CreditCardCreate, db:Session=
     db.add(new_credit_card)
     db.commit()
     return
+
+@app.post("/books/", response_model=BookResponse, status_code=status.HTTP_201_CREATED)
+def create_book(book: BookCreate, db: Session = Depends(get_db)):
+    if db.query(Book).filter(Book.isbn == book.isbn).first():
+        raise HTTPException(status_code=409, detail="Book with this ISBN already exists!")
+
+    new_book = Book(**book.model_dump())
+    db.add(new_book)
+    db.commit()
+    db.refresh(new_book)
+    return new_book
+
+@app.get("/books/{isbn}", response_model=BookResponse, status_code=status.HTTP_200_OK)
+def get_book(isbn: str, db: Session = Depends(get_db)):
+    book = db.query(Book).filter(Book.isbn == isbn).first()
+
+    if not book:
+        raise HTTPException(status_code=404, detail="Book not found!")
+
+    return book
+
+@app.post("/authors/", response_model=AuthorResponse, status_code=status.HTTP_201_CREATED)
+def create_author(author: AuthorCreate, db: Session = Depends(get_db)):
+    new_author = Author(**author.model_dump())
+    db.add(new_author)
+    db.commit()
+    db.refresh(new_author)
+    return new_author
+
+@app.get("/authors/{author_id}/books", response_model=list[BookResponse], status_code=status.HTTP_200_OK)
+def get_books_by_author(author_id: int, db: Session = Depends(get_db)):
+    author = db.query(Author).filter(Author.id == author_id).first()
+    if not author:
+        raise HTTPException(status_code=404, detail="Author not found!")
+
+    return db.query(Book).filter(Book.author_id == author_id).all()
