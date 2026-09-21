@@ -59,6 +59,37 @@ Implements backend for book creation, book retrieval by ISBN, author creation, a
 ### Sequence Diagram
 ![Sequence Diagram](diagrams/sequence_book_creation.png)
 
+# Feature 3: Shopping Cart API
+
+Owner: Ethan
+
+Branch: `shopping-cart`
+
+
+## Overview
+Implements backend for managing items in a user's shopping cart for immediate or future purchase — adding books, listing cart contents, retrieving the cart subtotal, and removing books — using FastAPI, SQLAlchemy, and SQLite.
+
+## Implemented Endpoints
+
+| Method | Endpoint | Description | Status Code |
+| :--- | :--- | :--- | :--- |
+| `POST` | `/cart/{username}/books` | Add a book to the user's shopping cart | 204 No Content / 404 Not Found |
+| `GET` | `/cart/{username}/books` | Retrieve the list of books in the user's cart | 200 OK / 404 Not Found |
+| `GET` | `/cart/{username}/subtotal` | Retrieve the subtotal price of all items in the cart | 200 OK / 404 Not Found |
+| `DELETE` | `/cart/{username}/books/{isbn}` | Remove a book from the user's shopping cart | 204 No Content / 404 Not Found |
+
+## UML Diagrams
+
+_To be added — see `diagrams/` folder._
+
+## How to Run & Verify
+
+1. Activate your virtual environment and install dependencies.
+2. Start the local development server:
+```bash
+   uvicorn api.api:app --reload
+```
+3. Open `http://127.0.0.1:8000/docs` to test endpoints interactively.
 
 ## How to Run & Verify
 

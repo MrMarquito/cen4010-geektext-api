@@ -1,7 +1,8 @@
 from fastapi import FastAPI, Depends, HTTPException, status
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
-from db.db import SessionLocal, User, CreditCard, Author, Book
+from db.db import SessionLocal, User, CreditCard, Author, Book, CartItem
 
 # API Init and Conn with DB
 app = FastAPI()
@@ -80,6 +81,23 @@ class BookResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+class CartItemAdd(BaseModel):
+    isbn: str
+    quantity: int = 1
+
+class CartBookResponse(BaseModel):
+    isbn: str
+    name: str
+    price: int
+    quantity: int
+
+    class Config:
+        from_attributes = True
+
+class CartSubtotalResponse(BaseModel):
+    username: str
+    subtotal: int
 
 # API Endpoints/Routes and functions
 @app.get("/")
@@ -169,3 +187,73 @@ def get_books_by_author(author_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Author not found!")
 
     return db.query(Book).filter(Book.author_id == author_id).all()
+
+@app.post("/cart/{username}/books", status_code=status.HTTP_204_NO_CONTENT)
+def add_to_cart(username: str, item: CartItemAdd, db: Session = Depends(get_db)):
+    db_user = db.query(User).filter(User.username == username).first()
+    if not db_user:
+        raise HTTPException(status_code=404, detail="User not found!")
+
+    db_book = db.query(Book).filter(Book.isbn == item.isbn).first()
+    if not db_book:
+        raise HTTPException(status_code=404, detail="Book not found!")
+
+    existing = (
+        db.query(CartItem)
+        .filter(CartItem.username == username, CartItem.isbn == item.isbn)
+        .first()
+    )
+    if existing:
+        existing.quantity += item.quantity
+    else:
+        db.add(CartItem(username=username, isbn=item.isbn, quantity=item.quantity))
+
+    db.commit()
+    return
+
+
+@app.get("/cart/{username}/books", response_model=list[CartBookResponse], status_code=status.HTTP_200_OK)
+def get_cart(username: str, db: Session = Depends(get_db)):
+    db_user = db.query(User).filter(User.username == username).first()
+    if not db_user:
+        raise HTTPException(status_code=404, detail="User not found!")
+
+    rows = (
+        db.query(CartItem, Book)
+        .join(Book, CartItem.isbn == Book.isbn)
+        .filter(CartItem.username == username)
+        .all()
+    )
+
+    return [
+        CartBookResponse(isbn=book.isbn, name=book.name, price=book.price, quantity=cart_item.quantity)
+        for cart_item, book in rows
+    ]
+
+
+@app.get("/cart/{username}/subtotal", response_model=CartSubtotalResponse, status_code=status.HTTP_200_OK)
+def get_cart_subtotal(username: str, db: Session = Depends(get_db)):
+    db_user = db.query(User).filter(User.username == username).first()
+    if not db_user:
+        raise HTTPException(status_code=404, detail="User not found!")
+
+    total = (
+        db.query(func.coalesce(func.sum(Book.price * CartItem.quantity), 0))
+        .join(CartItem, CartItem.isbn == Book.isbn)
+        .filter(CartItem.username == username)
+        .scalar()
+    )
+    return CartSubtotalResponse(username=username, subtotal=total)
+
+
+@app.delete("/cart/{username}/books/{isbn}", status_code=status.HTTP_204_NO_CONTENT)
+def remove_from_cart(username: str, isbn: str, db: Session = Depends(get_db)):
+    deleted = (
+        db.query(CartItem)
+        .filter(CartItem.username == username, CartItem.isbn == isbn)
+        .delete()
+    )
+    db.commit()
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Book not found in user's cart!")
+    return
