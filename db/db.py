@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine, Column, Integer, String, ForeignKey
+from sqlalchemy import create_engine, Column, Integer, String, ForeignKey, UniqueConstraint
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
@@ -45,5 +45,17 @@ class Book(Base):
     publisher = Column(String(100), nullable=True)
     year_published = Column(Integer, nullable=True)
     copies_sold = Column(Integer, default=0)
+
+class CartItem(Base):
+    __tablename__ = "cart_items"
+    __table_args__ = (
+        UniqueConstraint("username", "isbn", name="uq_username_isbn_cart"),
+    )
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    username = Column(String(100), ForeignKey("users.username"), index=True)
+    isbn = Column(String(13), ForeignKey("books.isbn"), index=True)
+    quantity = Column(Integer, nullable=False, default=1)
+
 
 Base.metadata.create_all(engine)
