@@ -98,3 +98,26 @@ _To be added — see `diagrams/` folder._
 ```bash
    uvicorn api.api:app --reload
 ```
+
+
+# Feature 5: Rating and Commenting API
+
+Owner: Leticia
+
+Branch: `rating-commenting`
+
+
+## Overview
+Implements backend for rating books on a 1-5 star scale, commenting on books, retrieving all comments for a book, and calculating a book's average rating using FastAPI, SQLAlchemy, and SQLite. Ratings and comments are stored with a datestamp.
+
+## Implemented Endpoints
+
+| Method | Endpoint | Description | Status Code |
+| :--- | :--- | :--- | :--- |
+| `POST` | `/books/{isbn}/ratings` | Create a 1-5 star rating for a book by a user | 201 Created / 404 Not Found / 422 Invalid Rating |
+| `POST` | `/books/{isbn}/comments` | Create a comment for a book by a user | 201 Created / 404 Not Found |
+| `GET` | `/books/{isbn}/comments` | Retrieve all comments for a book | 200 OK / 404 Not Found |
+| `GET` | `/books/{isbn}/ratings/average` | Retrieve the average rating of a book | 200 OK / 404 Not Found |
+
+## UML Diagrams
+To be added — see `diagrams/` folder.

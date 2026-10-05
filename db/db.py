@@ -1,4 +1,5 @@
-from sqlalchemy import create_engine, Column, Integer, String, ForeignKey, UniqueConstraint
+from datetime import datetime, timezone
+from sqlalchemy import create_engine, Column, Integer, String, DateTime, ForeignKey, UniqueConstraint
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
@@ -56,6 +57,24 @@ class CartItem(Base):
     username = Column(String(100), ForeignKey("users.username"), index=True)
     isbn = Column(String(13), ForeignKey("books.isbn"), index=True)
     quantity = Column(Integer, nullable=False, default=1)
+
+class Rating(Base):
+    __tablename__ = "ratings"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    username = Column(String(100), ForeignKey("users.username"), index=True)
+    isbn = Column(String(13), ForeignKey("books.isbn"), index=True)
+    rating = Column(Integer, nullable=False)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+class Comment(Base):
+    __tablename__ = "comments"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    username = Column(String(100), ForeignKey("users.username"), index=True)
+    isbn = Column(String(13), ForeignKey("books.isbn"), index=True)
+    comment = Column(String(1000), nullable=False)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
 
 Base.metadata.create_all(engine)

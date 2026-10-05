@@ -1,8 +1,9 @@
+from datetime import datetime
 from fastapi import FastAPI, Depends, HTTPException, status
 from sqlalchemy import func
 from sqlalchemy.orm import Session
-from pydantic import BaseModel
-from db.db import SessionLocal, User, CreditCard, Author, Book, CartItem
+from pydantic import BaseModel, Field
+from db.db import SessionLocal, User, CreditCard, Author, Book, CartItem, Rating, Comment
 
 # API Init and Conn with DB
 app = FastAPI()
@@ -98,6 +99,29 @@ class CartBookResponse(BaseModel):
 class CartSubtotalResponse(BaseModel):
     username: str
     subtotal: int
+
+class RatingCreate(BaseModel):
+    username: str
+    rating: int = Field(ge=1, le=5)
+
+class CommentCreate(BaseModel):
+    username: str
+    comment: str
+
+class CommentResponse(BaseModel):
+    id: int
+    username: str
+    isbn: str
+    comment: str
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+class AverageRatingResponse(BaseModel):
+    isbn: str
+    average_rating: float
+    total_ratings: int
 
 # API Endpoints/Routes and functions
 @app.get("/")
@@ -257,3 +281,54 @@ def remove_from_cart(username: str, isbn: str, db: Session = Depends(get_db)):
     if not deleted:
         raise HTTPException(status_code=404, detail="Book not found in user's cart!")
     return
+
+
+@app.post("/books/{isbn}/ratings", status_code=status.HTTP_201_CREATED)
+def create_rating(isbn: str, rating: RatingCreate, db: Session = Depends(get_db)):
+    if not db.query(User).filter(User.username == rating.username).first():
+        raise HTTPException(status_code=404, detail="User not found!")
+
+    if not db.query(Book).filter(Book.isbn == isbn).first():
+        raise HTTPException(status_code=404, detail="Book not found!")
+
+    db.add(Rating(username=rating.username, isbn=isbn, rating=rating.rating))
+    db.commit()
+    return
+
+
+@app.post("/books/{isbn}/comments", status_code=status.HTTP_201_CREATED)
+def create_comment(isbn: str, comment: CommentCreate, db: Session = Depends(get_db)):
+    if not db.query(User).filter(User.username == comment.username).first():
+        raise HTTPException(status_code=404, detail="User not found!")
+
+    if not db.query(Book).filter(Book.isbn == isbn).first():
+        raise HTTPException(status_code=404, detail="Book not found!")
+
+    db.add(Comment(username=comment.username, isbn=isbn, comment=comment.comment))
+    db.commit()
+    return
+
+
+@app.get("/books/{isbn}/comments", response_model=list[CommentResponse], status_code=status.HTTP_200_OK)
+def get_comments(isbn: str, db: Session = Depends(get_db)):
+    if not db.query(Book).filter(Book.isbn == isbn).first():
+        raise HTTPException(status_code=404, detail="Book not found!")
+
+    return db.query(Comment).filter(Comment.isbn == isbn).all()
+
+
+@app.get("/books/{isbn}/ratings/average", response_model=AverageRatingResponse, status_code=status.HTTP_200_OK)
+def get_average_rating(isbn: str, db: Session = Depends(get_db)):
+    if not db.query(Book).filter(Book.isbn == isbn).first():
+        raise HTTPException(status_code=404, detail="Book not found!")
+
+    average, total = (
+        db.query(func.avg(Rating.rating), func.count(Rating.id))
+        .filter(Rating.isbn == isbn)
+        .one()
+    )
+    return AverageRatingResponse(
+        isbn=isbn,
+        average_rating=round(average, 2) if average is not None else 0.0,
+        total_ratings=total,
+    )
