@@ -121,3 +121,34 @@ Implements backend for rating books on a 1-5 star scale, commenting on books, re
 
 ## UML Diagrams
 To be added — see `diagrams/` folder.
+
+
+# Feature 6: Wishlist Management API
+
+Owner: Joseph
+
+Branch: `wishlist-management`
+
+
+## Overview
+Implements backend for creating wishlists (up to 3 per user, each with a unique name), adding books to a wishlist, moving a book from a wishlist into the user's shopping cart, and retrieving the books in a wishlist using FastAPI, SQLAlchemy, and SQLite.
+
+## Implemented Endpoints
+
+| Method | Endpoint | Description | Status Code |
+| :--- | :--- | :--- | :--- |
+| `POST` | `/wishlists/` | Create a new wishlist for a user | 201 Created / 400 Limit Reached / 404 Not Found / 409 Conflict |
+| `POST` | `/wishlists/{wishlist_id}/books` | Add a book to a wishlist | 201 Created / 404 Not Found / 409 Conflict |
+| `DELETE` | `/wishlists/{wishlist_id}/books/{isbn}` | Remove a book from a wishlist and add it to the user's shopping cart | 204 No Content / 404 Not Found |
+| `GET` | `/wishlists/{wishlist_id}/books` | Retrieve the list of books in a wishlist | 200 OK / 404 Not Found |
+
+## UML Diagrams
+
+### Use Case Diagram
+![Use Case Diagram](diagrams/use_case_wishlist-management.png)
+
+### Class Diagram
+![Class Diagram](diagrams/classes_wishlist-management.png)
+
+### Sequence Diagram
+![Sequence Diagram](diagrams/sequence_move_to_cart.png)
