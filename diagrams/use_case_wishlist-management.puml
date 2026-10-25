@@ -1,0 +1,18 @@
+@startuml
+left to right direction
+skinparam packageStyle rectangle
+
+actor "GeekText User" as User
+
+rectangle "Wishlist Management System" {
+    usecase "Create Wishlist\n(POST /wishlists/)" as UC1
+    usecase "Add Book to Wishlist\n(POST /wishlists/{wishlist_id}/books)" as UC2
+    usecase "Move Book to Shopping Cart\n(DELETE /wishlists/{wishlist_id}/books/{isbn})" as UC3
+    usecase "List Books in Wishlist\n(GET /wishlists/{wishlist_id}/books)" as UC4
+}
+
+User --> UC1
+User --> UC2
+User --> UC3
+User --> UC4
+@enduml

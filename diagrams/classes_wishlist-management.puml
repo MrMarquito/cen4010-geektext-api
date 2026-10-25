@@ -1,0 +1,73 @@
+@startuml classes_wishlist-management
+skinparam classAttributeIconSize 0
+hide empty methods
+set namespaceSeparator none
+top to bottom direction
+
+package "Validation Schemas (Pydantic)" as Schemas {
+    class "WishlistCreate" as api.WishlistCreate {
+        +username : str
+        +name : str
+    }
+    class "WishlistResponse" as api.WishlistResponse {
+        +id : int
+        +username : str
+        +name : str
+    }
+    class "WishlistBookAdd" as api.WishlistBookAdd {
+        +isbn : str
+    }
+    class "BookResponse" as api.BookResponse {
+        +isbn : str
+        +name : str
+        +description : str | None
+        +price : int
+        +author_id : int
+        +genre : str | None
+        +publisher : str | None
+        +year_published : int | None
+        +copies_sold : int
+    }
+}
+
+package "Database Models (SQLAlchemy)" as Models {
+    class "User" as db.User {
+        +username [PK]
+    }
+    class "Wishlist" as db.Wishlist {
+        +id [PK]
+        +username [FK]
+        +name
+    }
+    class "WishlistItem" as db.WishlistItem {
+        +id [PK]
+        +wishlist_id [FK]
+        +isbn [FK]
+    }
+    class "Book" as db.Book {
+        +isbn [PK]
+    }
+    class "CartItem" as db.CartItem {
+        +id [PK]
+        +username [FK]
+        +isbn [FK]
+        +quantity
+    }
+    db.User "1" *-- "0..3" db.Wishlist : owns >
+    db.Wishlist "1" *-- "0..*" db.WishlistItem : contains >
+    db.Book "1" -- "0..*" db.WishlistItem : listed in >
+    db.WishlistItem ..> db.CartItem : moves to >
+}
+
+' Hidden edges forcing schemas above models
+api.WishlistCreate -[hidden]d-> db.Wishlist
+api.WishlistResponse -[hidden]d-> db.Wishlist
+api.WishlistBookAdd -[hidden]d-> db.Wishlist
+api.BookResponse -[hidden]d-> db.Wishlist
+
+api.WishlistCreate ..> db.Wishlist : creates >
+db.Wishlist ..> api.WishlistResponse : serializes to >
+api.WishlistBookAdd ..> db.WishlistItem : creates >
+db.Book ..> api.BookResponse : serializes to >
+
+@enduml

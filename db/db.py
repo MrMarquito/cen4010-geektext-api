@@ -76,5 +76,25 @@ class Comment(Base):
     comment = Column(String(1000), nullable=False)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
+class Wishlist(Base):
+    __tablename__ = "wishlists"
+    __table_args__ = (
+        UniqueConstraint("username", "name", name="uq_username_wishlist_name"),
+    )
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    username = Column(String(100), ForeignKey("users.username"), index=True, nullable=False)
+    name = Column(String(100), nullable=False)
+
+class WishlistItem(Base):
+    __tablename__ = "wishlist_items"
+    __table_args__ = (
+        UniqueConstraint("wishlist_id", "isbn", name="uq_wishlist_isbn"),
+    )
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    wishlist_id = Column(Integer, ForeignKey("wishlists.id"), index=True, nullable=False)
+    isbn = Column(String(13), ForeignKey("books.isbn"), index=True, nullable=False)
+
 
 Base.metadata.create_all(engine)

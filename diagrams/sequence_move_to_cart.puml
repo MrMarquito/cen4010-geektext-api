@@ -1,0 +1,65 @@
+@startuml
+autonumber
+actor "Client / Browser" as Client
+participant "FastAPI Router\n(api.py)" as API
+participant "SQLAlchemy Session\n(SessionLocal)" as DB_Session
+database "SQLite Database\n(users.db)" as DB
+
+Client -> API: DELETE /wishlists/{wishlist_id}/books/{isbn}
+activate API
+
+API -> DB_Session: query(Wishlist).filter(Wishlist.id == wishlist_id).first()
+activate DB_Session
+DB_Session -> DB: SELECT * FROM wishlists WHERE id = ?
+activate DB
+DB --> DB_Session: Wishlist Record
+deactivate DB
+DB_Session --> API: wishlist object
+deactivate DB_Session
+
+alt Wishlist Not Found
+    API --> Client: 404 Not Found {"detail": "Wishlist not found!"}
+else Wishlist Exists
+    API -> DB_Session: query(WishlistItem).filter(wishlist_id, isbn).first()
+    activate DB_Session
+    DB_Session -> DB: SELECT * FROM wishlist_items WHERE wishlist_id = ? AND isbn = ?
+    activate DB
+    DB --> DB_Session: WishlistItem Record
+    deactivate DB
+    DB_Session --> API: item object
+    deactivate DB_Session
+
+    alt Book Not In Wishlist
+        API --> Client: 404 Not Found {"detail": "Book not found in wishlist!"}
+    else Book In Wishlist
+        API -> DB_Session: query(CartItem).filter(username, isbn).first()
+        activate DB_Session
+        DB_Session -> DB: SELECT * FROM cart_items WHERE username = ? AND isbn = ?
+        activate DB
+        DB --> DB_Session: CartItem Record
+        deactivate DB
+        DB_Session --> API: cart_item object
+        deactivate DB_Session
+
+        alt Book Already In Cart
+            API -> API: cart_item.quantity += 1
+        else Book Not In Cart
+            API -> DB_Session: db.add(CartItem(username, isbn, quantity=1))
+        end
+
+        API -> DB_Session: db.delete(item)
+        API -> DB_Session: db.commit()
+        activate DB_Session
+        DB_Session -> DB: INSERT/UPDATE cart_items; DELETE FROM wishlist_items
+        activate DB
+        DB --> DB_Session: OK
+        deactivate DB
+        DB_Session --> API: Transaction committed
+        deactivate DB_Session
+
+        API --> Client: 204 No Content
+    end
+end
+
+deactivate API
+@enduml

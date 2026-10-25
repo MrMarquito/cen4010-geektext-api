@@ -3,7 +3,7 @@ from fastapi import FastAPI, Depends, HTTPException, status
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 from pydantic import BaseModel, Field
-from db.db import SessionLocal, User, CreditCard, Author, Book, CartItem, Rating, Comment
+from db.db import SessionLocal, User, CreditCard, Author, Book, CartItem, Rating, Comment, Wishlist, WishlistItem
 
 # API Init and Conn with DB
 app = FastAPI()
@@ -122,6 +122,23 @@ class AverageRatingResponse(BaseModel):
     isbn: str
     average_rating: float
     total_ratings: int
+
+class WishlistCreate(BaseModel):
+    username: str
+    name: str = Field(min_length=1, max_length=100)
+
+class WishlistResponse(BaseModel):
+    id: int
+    username: str
+    name: str
+
+    class Config:
+        from_attributes = True
+
+class WishlistBookAdd(BaseModel):
+    isbn: str
+
+MAX_WISHLISTS_PER_USER = 3
 
 # API Endpoints/Routes and functions
 @app.get("/")
@@ -331,4 +348,72 @@ def get_average_rating(isbn: str, db: Session = Depends(get_db)):
         isbn=isbn,
         average_rating=round(average, 2) if average is not None else 0.0,
         total_ratings=total,
+    )
+
+
+@app.post("/wishlists/", response_model=WishlistResponse, status_code=status.HTTP_201_CREATED)
+def create_wishlist(wishlist: WishlistCreate, db: Session = Depends(get_db)):
+    if not db.query(User).filter(User.username == wishlist.username).first():
+        raise HTTPException(status_code=404, detail="User not found!")
+
+    user_wishlists = db.query(Wishlist).filter(Wishlist.username == wishlist.username)
+    if user_wishlists.filter(Wishlist.name == wishlist.name).first():
+        raise HTTPException(status_code=409, detail="User already has a wishlist with this name!")
+    if user_wishlists.count() >= MAX_WISHLISTS_PER_USER:
+        raise HTTPException(status_code=400, detail=f"A user can have at most {MAX_WISHLISTS_PER_USER} wishlists!")
+
+    new_wishlist = Wishlist(username=wishlist.username, name=wishlist.name)
+    db.add(new_wishlist)
+    db.commit()
+    db.refresh(new_wishlist)
+    return new_wishlist
+
+
+@app.post("/wishlists/{wishlist_id}/books", status_code=status.HTTP_201_CREATED)
+def add_to_wishlist(wishlist_id: int, item: WishlistBookAdd, db: Session = Depends(get_db)):
+    if not db.query(Wishlist).filter(Wishlist.id == wishlist_id).first():
+        raise HTTPException(status_code=404, detail="Wishlist not found!")
+
+    if not db.query(Book).filter(Book.isbn == item.isbn).first():
+        raise HTTPException(status_code=404, detail="Book not found!")
+
+    if db.query(WishlistItem).filter(WishlistItem.wishlist_id == wishlist_id, WishlistItem.isbn == item.isbn).first():
+        raise HTTPException(status_code=409, detail="Book already in wishlist!")
+
+    db.add(WishlistItem(wishlist_id=wishlist_id, isbn=item.isbn))
+    db.commit()
+    return
+
+
+@app.delete("/wishlists/{wishlist_id}/books/{isbn}", status_code=status.HTTP_204_NO_CONTENT)
+def move_wishlist_book_to_cart(wishlist_id: int, isbn: str, db: Session = Depends(get_db)):
+    wishlist = db.query(Wishlist).filter(Wishlist.id == wishlist_id).first()
+    if not wishlist:
+        raise HTTPException(status_code=404, detail="Wishlist not found!")
+
+    item = db.query(WishlistItem).filter(WishlistItem.wishlist_id == wishlist_id, WishlistItem.isbn == isbn).first()
+    if not item:
+        raise HTTPException(status_code=404, detail="Book not found in wishlist!")
+
+    cart_item = db.query(CartItem).filter(CartItem.username == wishlist.username, CartItem.isbn == isbn).first()
+    if cart_item:
+        cart_item.quantity += 1
+    else:
+        db.add(CartItem(username=wishlist.username, isbn=isbn, quantity=1))
+
+    db.delete(item)
+    db.commit()
+    return
+
+
+@app.get("/wishlists/{wishlist_id}/books", response_model=list[BookResponse], status_code=status.HTTP_200_OK)
+def get_wishlist_books(wishlist_id: int, db: Session = Depends(get_db)):
+    if not db.query(Wishlist).filter(Wishlist.id == wishlist_id).first():
+        raise HTTPException(status_code=404, detail="Wishlist not found!")
+
+    return (
+        db.query(Book)
+        .join(WishlistItem, WishlistItem.isbn == Book.isbn)
+        .filter(WishlistItem.wishlist_id == wishlist_id)
+        .all()
     )
