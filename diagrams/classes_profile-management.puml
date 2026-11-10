@@ -1,6 +1,5 @@
 @startuml
 skinparam classAttributeIconSize 0
-hide empty methods
 
 package "Database Models (SQLAlchemy)" {
     class User {
@@ -9,6 +8,10 @@ package "Database Models (SQLAlchemy)" {
         +name : String(100)
         +email : String(100)
         +address : String(100)
+        --
+        +verify_password(plain_password: str) : bool
+        +update_fields(fields: dict) : void
+        +to_dict() : dict
     }
 
     class CreditCard {
@@ -17,6 +20,10 @@ package "Database Models (SQLAlchemy)" {
         +number : String(16)
         +exp : String(7)
         +cvv : String(4)
+        --
+        +mask_card_number() : str
+        +is_expired() : bool
+        +to_dict() : dict
     }
 
     User "1" *-- "0..*" CreditCard : owns >
@@ -29,12 +36,18 @@ package "Validation Schemas (Pydantic)" {
         +name : str | None
         +email : str | None
         +address : str | None
+        --
+        +validate_password(password: str) : str
+        +model_dump() : dict
     }
 
     class UserUpdate {
         +password : str | None
         +name : str | None
         +address : str | None
+        --
+        +has_updates() : bool
+        +model_dump(exclude_unset: bool) : dict
     }
 
     class UserResponse {
@@ -42,12 +55,19 @@ package "Validation Schemas (Pydantic)" {
         +name : str | None
         +email : str | None
         +address : str | None
+        --
+        +from_orm(user_model: User) : UserResponse
+        +model_dump() : dict
     }
 
     class CreditCardCreate {
         +number : str
         +exp : str
         +cvv : str
+        --
+        +validate_card_number(number: str) : str
+        +validate_exp(exp: str) : str
+        +model_dump() : dict
     }
 }
 
