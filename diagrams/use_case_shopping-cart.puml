@@ -1,0 +1,58 @@
+@startuml use_case_shopping-cart
+title Use Case Diagram - Feature 3: Shopping Cart API
+left to right direction
+skinparam dpi 200
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam defaultFontName Arial
+skinparam usecase {
+  BackgroundColor #EAF2FB
+  BorderColor #2B5C8A
+}
+skinparam rectangle {
+  BackgroundColor #FFFFFF
+  BorderColor #2B5C8A
+}
+skinparam note {
+  BackgroundColor #FFF9DB
+  BorderColor #B8A200
+  FontSize 11
+}
+
+actor "Customer\n(Web Browser /\nMobile Client)" as Customer
+
+rectangle "GeekText API  -  Shopping Cart System Boundary" {
+  usecase "UC1: Add Book\nto Cart" as UC1
+  usecase "UC2: View Books\nin Cart" as UC2
+  usecase "UC3: View Cart\nSubtotal" as UC3
+  usecase "UC4: Remove Book\nfrom Cart" as UC4
+  usecase "Validate User\nExists" as V1
+  usecase "Validate Book\nExists" as V2
+}
+
+database "SQLite\nDatabase" as DB
+
+Customer --> UC1
+Customer --> UC2
+Customer --> UC3
+Customer --> UC4
+
+UC1 ..> V1 : <<include>>
+UC1 ..> V2 : <<include>>
+UC2 ..> V1 : <<include>>
+UC3 ..> V1 : <<include>>
+
+UC1 -- DB
+UC2 -- DB
+UC3 -- DB
+UC4 -- DB
+
+
+legend bottom
+  |= Use Case |= Flow |
+  | UC1: Add Book to Cart | 1. Client sends POST /cart/{username}/books\n2. API validates user and book exist (404 if not)\n3. If book already in cart: increase quantity; else create new cart item\n4. API returns 204 No Content |
+  | UC2: View Books in Cart | 1. Client sends GET /cart/{username}/books\n2. API validates user exists (404 if not)\n3. API joins cart items with books\n4. API returns 200 with list of books and quantities |
+  | UC3: View Cart Subtotal | 1. Client sends GET /cart/{username}/subtotal\n2. API validates user exists (404 if not)\n3. API sums price x quantity of all cart items\n4. API returns 200 with the subtotal |
+  | UC4: Remove Book from Cart | 1. Client sends DELETE /cart/{username}/books/{isbn}\n2. API deletes the matching cart item\n3. If nothing deleted: 404; else 204 No Content |
+endlegend
+@enduml
