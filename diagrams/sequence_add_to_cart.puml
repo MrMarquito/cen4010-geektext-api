@@ -1,0 +1,93 @@
+@startuml sequence_add_to_cart
+title Sequence Diagram - Add Book to Shopping Cart (POST /cart/{username}/books)
+skinparam dpi 200
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam sequenceMessageAlign center
+skinparam ParticipantPadding 20
+skinparam sequence {
+  LifeLineBorderColor #2B5C8A
+  ParticipantBackgroundColor #EAF2FB
+  ParticipantBorderColor #2B5C8A
+  ActorBackgroundColor #EAF2FB
+  ActorBorderColor #2B5C8A
+  BoxBorderColor #999999
+}
+
+actor Customer
+participant "Client App\n(Web / Mobile)" as Client
+participant "Cart Controller\n(api.py route)" as Controller
+participant "DB Session\n(SQLAlchemy)" as Session
+participant "Models\n(User, Book, CartItem)" as Models
+database "SQLite DB" as DB
+
+Customer -> Client : Click "Add to cart"
+activate Client
+Client -> Controller : POST /cart/{username}/books\n{ isbn, quantity }
+activate Controller
+
+Controller -> Controller : validate body (CartItemAdd)
+
+Controller -> Session : query(User).filter(username)
+activate Session
+Session -> DB : SELECT FROM users
+activate DB
+DB --> Session : user row / none
+deactivate DB
+Session --> Controller : User / None
+deactivate Session
+
+alt user not found
+  Controller --> Client : 404 "User not found!"
+else user exists
+  Controller -> Session : query(Book).filter(isbn)
+  activate Session
+  Session -> DB : SELECT FROM books
+  activate DB
+  DB --> Session : book row / none
+  deactivate DB
+  Session --> Controller : Book / None
+  deactivate Session
+
+  alt book not found
+    Controller --> Client : 404 "Book not found!"
+  else book exists
+    Controller -> Session : query(CartItem).filter(username, isbn)
+    activate Session
+    Session -> DB : SELECT FROM cart_items
+    activate DB
+    DB --> Session : cart item / none
+    deactivate DB
+    Session --> Controller : CartItem / None
+    deactivate Session
+
+    alt book already in cart
+      Controller -> Models : existing.quantity += item.quantity
+      activate Models
+      Models --> Controller : updated CartItem
+      deactivate Models
+    else not in cart yet
+      Controller -> Models : new CartItem(username, isbn, quantity)
+      activate Models
+      Models --> Controller : CartItem instance
+      deactivate Models
+      Controller -> Session : add(CartItem)
+    end
+
+    Controller -> Session : commit()
+    activate Session
+    Session -> DB : INSERT / UPDATE cart_items
+    activate DB
+    DB --> Session : success
+    deactivate DB
+    Session --> Controller : committed
+    deactivate Session
+
+    Controller --> Client : 204 No Content
+  end
+end
+
+deactivate Controller
+Client --> Customer : Show "Book added to cart"
+deactivate Client
+@enduml

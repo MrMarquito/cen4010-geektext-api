@@ -1,0 +1,74 @@
+@startuml classes_shopping-cart
+title Class Diagram - Feature 3: Shopping Cart API
+skinparam dpi 200
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam classAttributeIconSize 0
+skinparam class {
+  BackgroundColor #EAF2FB
+  BorderColor #2B5C8A
+  HeaderBackgroundColor #D3E3F5
+}
+skinparam linetype ortho
+
+class User <<Model>> {
+  - username : String {PK}
+  - password : String
+  - name : String
+  - email : String
+  - address : String
+}
+
+class Book <<Model>> {
+  - isbn : String {PK}
+  - name : String
+  - description : String
+  - price : Integer
+  - author_id : Integer {FK}
+  - genre : String
+  - publisher : String
+  - year_published : Integer
+  - copies_sold : Integer
+}
+
+class CartItem <<Model>> {
+  - id : Integer {PK}
+  - username : String {FK}
+  - isbn : String {FK}
+  - quantity : Integer
+}
+
+class CartController <<API Routes>> {
+  + add_to_cart(username : String, item : CartItemAdd, db : Session) : void
+  + get_cart(username : String, db : Session) : List<CartBookResponse>
+  + get_cart_subtotal(username : String, db : Session) : CartSubtotalResponse
+  + remove_from_cart(username : String, isbn : String, db : Session) : void
+}
+
+class CartItemAdd <<Request Schema>> {
+  + isbn : String
+  + quantity : Integer = 1
+}
+
+class CartBookResponse <<Response Schema>> {
+  + isbn : String
+  + name : String
+  + price : Integer
+  + quantity : Integer
+}
+
+class CartSubtotalResponse <<Response Schema>> {
+  + username : String
+  + subtotal : Integer
+}
+
+User "1" -- "0..*" CartItem : owns >
+Book "1" -- "0..*" CartItem : appears in >
+
+CartController ..> CartItem : creates / updates / deletes
+CartController ..> User : validates
+CartController ..> Book : validates / reads price
+CartController ..> CartItemAdd : receives
+CartController ..> CartBookResponse : returns
+CartController ..> CartSubtotalResponse : returns
+@enduml
