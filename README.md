@@ -80,7 +80,14 @@ Implements backend for managing items in a user's shopping cart for immediate or
 
 ## UML Diagrams
 
-_To be added — see `diagrams/` folder._
+### Use Case Diagram
+![Use Case Diagram](diagrams/use_case_shopping-cart.png)
+
+### Class Diagram
+![Class Diagram](diagrams/classes_shopping-cart.png)
+
+### Sequence Diagram
+![Sequence Diagram](diagrams/sequence_add_to_cart.png)
 
 ## How to Run & Verify
 
